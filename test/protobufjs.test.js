@@ -177,9 +177,11 @@ describe('Protobufjs Message Support', () => {
     env.registerVariable('person', 'test.Person')
     env.registerVariable('dynPerson', 'dyn')
 
-    // We trust that the protobuf message is correctly structured. Return values are passed as is.
     const person = Person.create({name: 'Alice', age: 30, config: {theme: 1, mode: 'hello'}})
-    env.expectEval('person.config.theme', 1, {person: person})
+    const typemismatch = /Field 'theme' is not of type 'string', got 'double'/
+    env.expectEvalThrows('person.config.theme', typemismatch, {person: person})
+
+    // We trust that the protobuf message is correctly structured. Return values are passed as is.
     env.expectEval('dynPerson.config.theme', 1, {dynPerson: person})
     env.expectEval('dynPerson.config.mode', 'hello', {dynPerson: person})
 

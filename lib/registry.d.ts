@@ -93,6 +93,16 @@ export const celTypes: {
 }
 
 /**
+ * Schema definition for inline typed object registration.
+ * Maps field names to type strings or nested schemas.
+ * When used with `registerVariable`, internally calls `registerType` to create
+ * a named type with runtime conversion support.
+ */
+export interface ObjectSchema {
+  [field: string]: string | ObjectSchema
+}
+
+/**
  * Registry for managing function overloads, operator overloads, and type mappings.
  */
 export class Registry {
@@ -126,14 +136,17 @@ export class Registry {
 
   /**
    * Register a custom type with its constructor and optional field definitions.
+   * When `ctor` is omitted but `fields` is provided, an internal wrapper class is auto-generated
+   * and a default `convert` function is created to wrap plain objects at runtime.
    * @param typename - The name of the type
-   * @param definition - Either a constructor function or an object with ctor and fields
-   * @param withoutDynRegistration - If true, skip automatic dyn() and type() function registration
+   * @param definition - Either a constructor function or an object with ctor/fields/convert
    */
   registerType(
     typename: string,
-    definition: Function | {ctor: Function; fields?: Record<string, any>},
-    withoutDynRegistration?: boolean
+    definition:
+      | Function
+      | {ctor: Function; fields?: Record<string, string>; convert?: (value: any) => any}
+      | {fields: Record<string, string>; convert?: (value: any) => any}
   ): void
 
   /**
@@ -145,10 +158,19 @@ export class Registry {
 
   /**
    * Register a variable with its type, throwing if it already exists.
+   * When an ObjectSchema is provided via `{schema: ...}`, a type is auto-registered
+   * via `registerType` with runtime conversion support.
    * @param name - The variable name
-   * @param type - The variable type name or declaration
+   * @param type - The variable type name, declaration, or options with schema
    */
-  registerVariable(name: string, type: string | TypeDeclaration): this
+  registerVariable(
+    name: string,
+    type:
+      | string
+      | TypeDeclaration
+      | {type: string; description?: string}
+      | {schema: ObjectSchema; description?: string}
+  ): this
 
   /**
    * Register a unary operator overload.
@@ -227,6 +249,9 @@ export class RootContext {
   /** Look up the fallback value (built-ins) for a name. */
   getValue(name: string): any
 
+  /** Set a converted value for a variable. */
+  setConverted(name: string, value: any): any
+
   /** Fork with a placeholder variable binding (used for comprehensions). */
   forkWithVariable(iterVar: string, iterType: TypeDeclaration): OverlayContext
 }
@@ -239,6 +264,9 @@ export class OverlayContext {
 
   /** Fork with a placeholder variable binding (used for comprehensions). */
   forkWithVariable(iterVar: string, iterType: TypeDeclaration): OverlayContext
+
+  /** Set a converted value for a variable. */
+  setConverted(name: string, value: any): any
 
   /** Set a accumulator variable type */
   setAccuType(type: TypeDeclaration): this

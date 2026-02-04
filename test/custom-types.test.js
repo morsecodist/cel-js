@@ -429,4 +429,110 @@ describe('Custom Type Registration', () => {
     env.expectEval('ct == "equal-test"', true, {ct: new CustomType('equal-test')})
     env.expectEval('ct != "equal-test"', false, {ct: new CustomType('equal-test')})
   })
+
+  describe('registerType with fields only (no constructor)', () => {
+    test('basic fields-only registration', () => {
+      const env = new TestEnvironment()
+        .registerType('User', {fields: {name: 'string', age: 'int'}})
+        .registerVariable('user', 'User')
+
+      // Type checking works
+      const check = env.check('user.name')
+      assert.strictEqual(check.valid, true)
+      assert.strictEqual(check.type, 'string')
+
+      // Runtime: plain object auto-converted
+      env.expectEval('user.name', 'Alice', {user: {name: 'Alice', age: 30n}})
+      env.expectEval('user.age', 30n, {user: {name: 'Alice', age: 30n}})
+    })
+
+    test('runtime field type validation', () => {
+      const env = new TestEnvironment()
+        .registerType('User', {fields: {name: 'string', age: 'int'}})
+        .registerVariable('user', 'User')
+
+      // Wrong field type at runtime should throw
+      env.expectEvalThrows('user.age', /Field 'age' is not of type 'int', got 'double'/, {
+        user: {name: 'Alice', age: 30}
+      })
+    })
+
+    test('undeclared field rejected at runtime', () => {
+      const env = new TestEnvironment()
+        .registerType('User', {fields: {name: 'string'}})
+        .registerVariable('user', 'User')
+
+      env.expectEvalThrows('user.password', /No such key: password/, {
+        user: {name: 'Alice', password: 'secret'}
+      })
+    })
+
+    test('nested type conversion', () => {
+      const env = new TestEnvironment()
+        .registerType('Address', {fields: {city: 'string', zip: 'string'}})
+        .registerType('Person', {fields: {name: 'string', address: 'Address'}})
+        .registerVariable('person', 'Person')
+
+      env.expectEval('person.address.city', 'NYC', {
+        person: {name: 'Alice', address: {city: 'NYC', zip: '10001'}}
+      })
+    })
+
+    test('custom convert function', () => {
+      class User {
+        constructor(name, age) {
+          this.name = name
+          this.age = age
+        }
+      }
+
+      const env = new TestEnvironment()
+        .registerType('User', {
+          ctor: User,
+          fields: {name: 'string', age: 'int'},
+          convert: (v) => new User(v.name, v.age)
+        })
+        .registerVariable('user', 'User')
+
+      // Plain object gets converted via custom convert
+      env.expectEval('user.name', 'Alice', {user: {name: 'Alice', age: 30n}})
+    })
+
+    test('already-converted instances pass through', () => {
+      class User {
+        constructor(name) {
+          this.name = name
+        }
+      }
+
+      const env = new TestEnvironment()
+        .registerType('User', {
+          ctor: User,
+          fields: {name: 'string'},
+          convert: (v) => v instanceof User ? v : new User(v.name)
+        })
+        .registerVariable('user', 'User')
+
+      // Passing a proper instance works without conversion
+      env.expectEval('user.name', 'Alice', {user: new User('Alice')})
+    })
+
+    test('multiple accesses use cached conversion', () => {
+      class User {}
+      let convertCount = 0
+      const env = new TestEnvironment()
+        .registerType('User', {
+          ctor: User,
+          fields: {name: 'string', age: 'int'},
+          convert(v) {
+            convertCount++
+            return Object.assign(new User(), v)
+          }
+        })
+        .registerVariable('user', 'User')
+
+      env.evaluate('user.name + " " + string(user.age)', {user: {name: 'Alice', age: 30n}})
+      assert.strictEqual(convertCount, 1, 'convert should be called only once per evaluation')
+    })
+  })
 })
