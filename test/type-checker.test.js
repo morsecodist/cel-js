@@ -682,6 +682,7 @@ describe('Type Checker', () => {
 
     // Complex expression with macros and comparisons
     env.expectType('users.filter(u, u.age >= minAge).map(u, u.name)', 'list<string>')
+    env.expectType('users.filter(u, u.age >= minAge).map(u, u["name"])', 'list<string>')
     env.expectType('users.map(u, {"related": users})', 'list<map<string, list<User>>>')
   })
 
