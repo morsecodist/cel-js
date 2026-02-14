@@ -96,6 +96,7 @@ describe('lists expressions', () => {
   describe('index access', () => {
     test('should access list by index', () => {
       expectEval('a[1]', 2, {a: [1, 2, 3]})
+      expectEval('a[1]', 2, {a: new Set([1, 2, 3])})
     })
 
     test('should access list by index if literal used', () => {
