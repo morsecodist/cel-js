@@ -166,6 +166,12 @@ describe('maps/objects expressions', () => {
 
     test('should access nested properties', () => {
       expectEval('user.profile.name', 'Alice', {user: {profile: {name: 'Alice'}}})
+      expectEval('user.profile.name', 'Alice', new Map([['user', {profile: {name: 'Alice'}}]]))
+      expectEval(
+        'user.profile.name',
+        'Alice',
+        new Map([['user', new Map([['profile', {name: 'Alice'}]])]])
+      )
     })
 
     test('allows property access on maps in list', () => {

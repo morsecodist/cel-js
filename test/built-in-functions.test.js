@@ -632,6 +632,10 @@ describe('built-in functions', () => {
       expectEval('type({}) == map', true)
       expectEval('type == type', true)
       expectEval('type(string) == type', true)
+
+      // can access globals with context
+      expectEval('type(string) == type', true, {})
+      expectEval('type(string) == type', true, new Map())
     })
 
     test('supports inequality', () => {
