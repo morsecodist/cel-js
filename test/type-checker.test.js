@@ -733,7 +733,7 @@ describe('Type Checker', () => {
     env.expectType('someList[intIndex]', 'dyn')
 
     for (const t of ['uintIndex', '0u', 'doubleIndex', '1.5', 'stringIndex', '"0"']) {
-      env.expectCheckThrows(`someList[${t}]`, 'List index must be int')
+      env.expectCheckThrows(`someList[${t}]`, /List index must be int/)
     }
   })
 
@@ -775,7 +775,10 @@ describe('Type Checker', () => {
     env.expectCheckThrows('someList.size')
 
     // Property access not allowed on primitives
-    env.expectCheckThrows('someNum.property', 'Cannot index type')
+    env.expectCheckThrows(
+      'someNum.property',
+      "Cannot index type 'int'\n\n>    1 | someNum.property\n                 ^"
+    )
   })
 
   test('string indexing not supported', () => {
@@ -784,8 +787,8 @@ describe('Type Checker', () => {
       .registerVariable('index', 'int')
 
     // String indexing is not supported in CEL
-    env.expectCheckThrows('str[0]', 'Cannot index type')
-    env.expectCheckThrows('str[index]', 'Cannot index type')
+    env.expectCheckThrows('str[0]', /Cannot index type/)
+    env.expectCheckThrows('str[index]', /Cannot index type/)
   })
 
   test('custom type property access', () => {

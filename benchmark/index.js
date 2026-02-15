@@ -20,6 +20,7 @@ const env = new Environment({
   unlistedVariablesAreDyn: true
 })
   .registerVariable('items', 'list<dyn>')
+  .registerVariable('doubles', 'list<double>')
   .registerFunction('identityAsync(double): double', async (a) => a)
   .registerFunction('identityAsync(list): list', async (a) => a)
 

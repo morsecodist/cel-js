@@ -98,10 +98,19 @@ describe('Custom Type Registration', () => {
     // Should work with correct type
     env.expectEval('p1.x', 10n, {p1: new Point(10n, 20n)})
 
-    // Should fail with wrong field type
-    env.expectEvalThrows('p1.x', /Field 'x' is not of type 'int', got 'double'/, {
-      p1: new Point(10, 20n)
-    })
+    // Should fail with wrong field type and hint
+    env.expectEvalThrows(
+      'p1.x',
+      [
+        `Field 'x' is not of type 'int', got 'double'`,
+        '\n\n',
+        `>    1 | p1.x\n`,
+        `            ^`
+      ].join(''),
+      {
+        p1: new Point(10, 20n)
+      }
+    )
 
     // Should fail with wrong variable type
     env.expectEvalThrows('p1', /Variable 'p1' is not of type 'Point'/, {p1: new Vector(1, 2)})
@@ -509,7 +518,7 @@ describe('Custom Type Registration', () => {
         .registerType('User', {
           ctor: User,
           fields: {name: 'string'},
-          convert: (v) => v instanceof User ? v : new User(v.name)
+          convert: (v) => (v instanceof User ? v : new User(v.name))
         })
         .registerVariable('user', 'User')
 

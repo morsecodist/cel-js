@@ -249,9 +249,6 @@ export class RootContext {
   /** Look up the fallback value (built-ins) for a name. */
   getValue(name: string): any
 
-  /** Set a converted value for a variable. */
-  setConverted(name: string, value: any): any
-
   /** Fork with a placeholder variable binding (used for comprehensions). */
   forkWithVariable(iterVar: string, iterType: TypeDeclaration): OverlayContext
 }
@@ -265,9 +262,6 @@ export class OverlayContext {
   /** Fork with a placeholder variable binding (used for comprehensions). */
   forkWithVariable(iterVar: string, iterType: TypeDeclaration): OverlayContext
 
-  /** Set a converted value for a variable. */
-  setConverted(name: string, value: any): any
-
   /** Set a accumulator variable type */
   setAccuType(type: TypeDeclaration): this
 
@@ -275,7 +269,7 @@ export class OverlayContext {
   setAccuValue(accuValue: any): this
 
   /** Set the iteration variable value */
-  setIterValue(iterValue: any): this
+  setIterValue(iterValue: any, evaluator: any, ast: any): this
 
   /** Resolve a value by name, falling back to parent scopes. */
   getValue(name: string): any
