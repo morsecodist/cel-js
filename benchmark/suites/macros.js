@@ -5,6 +5,11 @@ export default [
     context: {items: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
   },
   {
+    name: 'List .map with list<double>',
+    expression: 'doubles.map(x, x + 1.0)',
+    context: {doubles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
+  },
+  {
     name: 'List .map with async',
     expression: 'identityAsync(items).map(x, identityAsync(x + 1.0))',
     context: {items: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}

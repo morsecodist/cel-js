@@ -66,9 +66,12 @@ export class TestEnvironment extends Environment {
 }
 
 function assertError(err, matcher) {
-  throws(() => {
-    throw err
-  }, matcher)
+  throws(
+    () => {
+      throw err
+    },
+    typeof matcher === 'string' ? {message: matcher} : matcher
+  )
   return err
 }
 
