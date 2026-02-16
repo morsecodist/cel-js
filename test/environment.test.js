@@ -454,7 +454,8 @@ describe('Environment', () => {
       const ctx = {user: {name: 'Alice', age: 30n}}
       const result = env.evaluate('[user]', ctx)
       assert.strictEqual(result.length, 1)
-      assert.deepStrictEqual({...result[0]}, {name: 'Alice', age: 30n})
+      assert.ok(result[0] instanceof Map)
+      assert.deepStrictEqual(Object.fromEntries(result[0]), {name: 'Alice', age: 30n})
     })
   })
 })

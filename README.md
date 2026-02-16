@@ -141,7 +141,7 @@ new Environment({
 - **`registerFunction(signature, handler)`** - Add custom functions
 - **`registerOperator(signature, handler)`** - Add custom operators
 - **`registerConstant(name, type, value)`** - Provide immutable values without passing them in context
-- **`clone()`** - Create a fast, isolated copy that stops the parent from registering more entries
+- **`clone()`** - Create an isolated copy. Call that stops the parent from registering more entries.
 - **`hasVariable(name)`** - Check if variable is registered
 - **`parse(expression)`** - Parse expression for reuse
 - **`evaluate(expression, context)`** - Evaluate with context
@@ -155,9 +155,51 @@ env.registerVariable('user', 'map')
 env.registerVariable('user', 'map', {description: 'The current user'})
 env.registerVariable('user', {type: 'map', description: 'The current user'})
 env.registerVariable({name: 'user', type: 'map', description: 'The current user'})
+
+// Passing a schema property will implicitly create a custom type and
+// convert objects/maps to a new class instance. Those values then behave similar like
+// explicit types that are created using a constructor.
+env.registerVariable({
+  name: 'user',
+  schema: {
+    email: 'string',
+    age: 'int',
+    profile: {
+      tags: 'list<string>',
+      avatar: 'string'
+    }
+  }
+})
 ```
 
 The `type` can be a type string (e.g. `'int'`, `'map'`, `'list<string>'`) or a `TypeDeclaration` obtained from another environment.
+
+#### `registerType` signatures
+
+```javascript
+// Name + constructor class
+// when fields are not provided, own properties are accessible automatically
+env.registerType('Vector', Vector)
+
+// Name + object with constructor and field types
+env.registerType('Vector', {ctor: Vector, fields: {x: 'double', y: 'double'}})
+
+// Name + object with fields only (auto-generates a wrapper class and convert function)
+env.registerType('Vector', {fields: {x: 'double', y: 'double'}})
+
+// Name + object with nested schema (registers nested types automatically)
+env.registerType('Vector', {schema: {x: 'double', y: 'double'}})
+
+// Single object with name and schema
+env.registerType({name: 'Vector', schema: {x: 'double', y: 'double'}})
+
+// Single object with constructor (name inferred from constructor)
+env.registerType({ctor: Vector, fields: {x: 'double', y: 'double'}})
+```
+
+When `fields` or `schema` is provided without a `ctor`, an internal wrapper class is auto-generated and plain objects are automatically converted at runtime. A custom `convert` function can be passed to override this default conversion.
+
+When using the `schema` declaration, we're creating a new Map instance for the specific type when retrieving the values by variable from a context object.
 
 #### `registerFunction` signatures
 
