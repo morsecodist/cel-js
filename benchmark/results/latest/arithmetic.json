@@ -1,63 +1,63 @@
 {
   "suite": "arithmetic",
-  "capturedAt": "2026-02-07T09:27:08.279Z",
-  "nodeVersion": "v24.12.0",
+  "capturedAt": "2026-02-16T21:46:33.621Z",
+  "nodeVersion": "v24.13.1",
   "results": [
     {
       "name": "parse/general/Basic Arithmetic",
-      "opsSec": 3833591,
+      "opsSec": 3577978,
       "runsSampled": 11,
-      "min": 258.2231679403307,
-      "max": 265.9058983323951
+      "min": 265.6514369173467,
+      "max": 292.87495236969005
     },
     {
       "name": "eval/general/Basic Arithmetic",
-      "opsSec": 21865558,
+      "opsSec": 21001175,
       "runsSampled": 10,
-      "min": 45.442704169436276,
-      "max": 45.91634753099371
+      "min": 46.19374517764977,
+      "max": 49.524996920894075
     },
     {
       "name": "parse/general/Complex Arithmetic",
-      "opsSec": 2176749,
+      "opsSec": 2077038,
       "runsSampled": 11,
-      "min": 456.0445785120936,
-      "max": 464.24111292841366
+      "min": 465.7040488308905,
+      "max": 497.1827229103235
     },
     {
       "name": "eval/general/Complex Arithmetic",
-      "opsSec": 16439930,
+      "opsSec": 15769781,
       "runsSampled": 10,
-      "min": 60.20169065901816,
-      "max": 61.21185829477413
+      "min": 61.824866168985494,
+      "max": 64.72355113079409
     },
     {
       "name": "parse/general/Complex Arithmetic with int",
-      "opsSec": 1796058,
+      "opsSec": 1757050,
       "runsSampled": 11,
-      "min": 551.7884507042254,
-      "max": 564.1187555415886
+      "min": 554.5297879953484,
+      "max": 595.0556972694808
     },
     {
       "name": "eval/general/Complex Arithmetic with int",
-      "opsSec": 10856294,
-      "runsSampled": 10,
-      "min": 91.15887704683047,
-      "max": 92.86281252371285
+      "opsSec": 10527588,
+      "runsSampled": 11,
+      "min": 93.30785035211609,
+      "max": 97.94987014150098
     },
     {
       "name": "parse/general/Complex Arithmetic with variables",
-      "opsSec": 3163147,
+      "opsSec": 3083158,
       "runsSampled": 11,
-      "min": 312.2069244875402,
-      "max": 321.7871953738125
+      "min": 314.919540883723,
+      "max": 337.6402203747166
     },
     {
       "name": "eval/general/Complex Arithmetic with variables",
-      "opsSec": 4887340,
-      "runsSampled": 10,
-      "min": 203.36122457298927,
-      "max": 205.72848481377233
+      "opsSec": 5071257,
+      "runsSampled": 9,
+      "min": 193.67842727518314,
+      "max": 199.35648661492158
     }
   ]
 }

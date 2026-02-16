@@ -11,7 +11,7 @@ CEL (Common Expression Language) is a non-Turing complete language designed for 
 ## Features
 
 - 🚀 **Zero Dependencies** - No external packages required
-- ⚡ **High Performance** - Up to 22x faster evaluation, 3x faster parsing than alternatives
+- ⚡ **High Performance** - About 10x faster than alternatives (compared to [cel-js](https://www.npmjs.com/package/cel-js))
 - 📦 **ES Modules** - Modern ESM with full tree-shaking support
 - 🔒 **Type Safe** - Environment API with type checking for variables, custom types and functions
 - 🎯 **Most of the CEL Spec** - Including macros, custom functions and types, optional chaining, input variables, and all operators
@@ -555,29 +555,33 @@ const result = env.evaluate('magnitude(v1 + v2)', {
 
 ## Performance
 
-Benchmark results comparing against the `cel-js` package on Node.js v24.8.0 (Apple Silicon):
+There are a few expressions compared with the `cel-js` module in `./benchmark/comparison.js` where `@marcbachmann/cel-js` is about 10x faster in average.
 
-### Parsing Performance
-- **Average: 3.1x faster** (range: 0.76x - 14.8x)
-- Simple expressions: **7-15x faster**
-- Array/Map creation: **8-10x faster**
+Benchmark results comparing against the `cel-js` package on Node.js v24.13.1(Macbook Air, Apple Silicon M3).
 
-### Evaluation Performance
-- **Average: 22x faster** (range: 5.5x - 111x)
-- Simple values: **64-111x faster**
-- Collections: **46-58x faster**
-- Complex logic: **5-14x faster**
+```
+$ ./benchmark/comparison.js
 
-### Highlights
+marcbachmann parse (variable lookups)         x 6,491,393 ops/sec (10 runs sampled) min..max=(149.34ns...156.11ns)
+chromeGG/cel parse (variable lookups)         x 530,216 ops/sec (12 runs sampled) min..max=(1.56us...2.04us)
+marcbachmann evaluate (variable lookups)      x 14,026,229 ops/sec (10 runs sampled) min..max=(70.35ns...71.76ns)
+chromeGG/cel evaluate (variable lookups)      x 997,079 ops/sec (10 runs sampled) min..max=(970.67ns...1.01us)
+marcbachmann parse (check container ports)    x 533,663 ops/sec (11 runs sampled) min..max=(1.86us...1.88us)
+chromeGG/cel parse (check container ports)    x 64,376 ops/sec (9 runs sampled) min..max=(15.24us...15.91us)
+marcbachmann evaluate (check container ports) x 2,121,321 ops/sec (11 runs sampled) min..max=(463.34ns...478.94ns)
+chromeGG/cel evaluate (check container ports) x 210,473 ops/sec (10 runs sampled) min..max=(4.51us...5.14us)
+marcbachmann parse (check jwt claims)         x 554,418 ops/sec (10 runs sampled) min..max=(1.76us...1.81us)
+chromeGG/cel parse (check jwt claims)         x 60,222 ops/sec (12 runs sampled) min..max=(13.73us...17.89us)
+marcbachmann evaluate (check jwt claims)      x 1,716,346 ops/sec (11 runs sampled) min..max=(579.29ns...588.51ns)
+chromeGG/cel evaluate (check jwt claims)      x 152,115 ops/sec (9 runs sampled) min..max=(6.37us...6.57us)
+marcbachmann parse (access log filtering)     x 1,297,845 ops/sec (11 runs sampled) min..max=(762.15ns...784.65ns)
+chromeGG/cel parse (access log filtering)     x 127,437 ops/sec (12 runs sampled) min..max=(6.68us...8.28us)
+marcbachmann evaluate (access log filtering)  x 3,507,039 ops/sec (10 runs sampled) min..max=(281.53ns...286.70ns)
+chromeGG/cel evaluate (access log filtering)  x 409,620 ops/sec (10 runs sampled) min..max=(2.38us...2.51us)
+```
 
-| Operation | Parsing | Evaluation |
-|-----------|---------|------------|
-| Simple number | 7.3x | 111x |
-| Array creation | 10.1x | 57.9x |
-| Map creation | 8.6x | 46x |
-| Complex authorization | 1.3x | 5.5x |
+To run the benchmarks against previous versions of this module, you can run `./benchmark/index.js`.
 
-Run benchmarks: `npm run benchmark`
 
 ## Error Handling
 

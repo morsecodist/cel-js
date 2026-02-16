@@ -29,6 +29,11 @@ function createChromeGGCelJsRenderer(expression) {
 
 const scripts = [
   {
+    name: 'variable lookups',
+    expression: 'foo.bar.test',
+    data: {foo: {bar: {test: 'hello'}}}
+  },
+  {
     name: 'check container ports',
     expression: `
       object.spec.template.spec.containers.all(container,

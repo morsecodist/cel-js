@@ -1,4 +1,4 @@
-#! /usr/bin/env -S node --allow-natives-syntax
+#! /usr/bin/env -S node --allow-natives-syntax --expose-gc
 import process from 'node:process'
 import fs from 'node:fs/promises'
 import path from 'node:path'
