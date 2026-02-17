@@ -2,57 +2,50 @@ import {describe, test} from 'node:test'
 import assert from 'node:assert'
 import {ParseError, EvaluationError} from '../lib/errors.js'
 import {Environment} from '../lib/evaluator.js'
+import {TestEnvironment} from './helpers.js'
 
 describe('Environment', () => {
   test('basic usage', () => {
-    const env = new Environment()
-    const result = env.evaluate('1 + 2')
-    assert.strictEqual(result, 3n)
+    const env = new TestEnvironment()
+    env.expectEval('1 + 2', 3n)
   })
 
   test('variable registration and type checking', () => {
-    const env = new Environment()
+    const env = new TestEnvironment()
       .registerVariable('name', 'string')
       .registerVariable('age', 'int')
       .registerVariable('isActive', 'bool')
 
-    // Test with correct types
-    const result1 = env.evaluate('name + " is " + string(age)', {
+    env.expectEval('name + " is " + string(age)', 'John is 30', {
       name: 'John',
       age: 30n
     })
-    assert.strictEqual(result1, 'John is 30')
 
-    // Test with incorrect type should throw
-    assert.throws(() => {
-      env.evaluate('name', {name: 123}) // number instead of string
-    }, EvaluationError)
+    env.expectEvalThrows('name', EvaluationError, {name: 123})
   })
 
   test('context variables without explicit type get dyn', () => {
-    const env = new Environment({unlistedVariablesAreDyn: true}).registerVariable(
+    const env = new TestEnvironment({unlistedVariablesAreDyn: true}).registerVariable(
       'explicitVar',
       'string'
     )
 
-    const result = env.evaluate('explicitVar + string(implicitVar)', {
+    env.expectEval('explicitVar + string(implicitVar)', 'Hello 42', {
       explicitVar: 'Hello ',
       implicitVar: 42
     })
-    assert.strictEqual(result, 'Hello 42')
   })
 
   test('custom function registration', () => {
-    const env = new Environment()
+    const env = new TestEnvironment()
       .registerFunction('multiplyBy2(int): int', (x) => x * 2n)
       .registerFunction('greet(string): string', (name) => `Hello, ${name}!`)
 
-    const result1 = env.evaluate('multiplyBy2(21)')
-    assert.strictEqual(result1, 42n)
+    env.expectEval('multiplyBy2(21)', 42n)
   })
 
   test('chaining methods', () => {
-    const env = new Environment()
+    const env = new TestEnvironment()
       .registerVariable('x', 'int')
       .registerVariable('y', 'int')
       .registerFunction('add(double, double): double', (a, b) => a + b)
@@ -60,14 +53,13 @@ describe('Environment', () => {
     assert.ok(env instanceof Environment)
     assert.ok(env.hasVariable('x'))
     assert.ok(env.hasVariable('y'))
-    assert.ok(env.evaluate('add(1.5, 2.5)') === 4)
+    env.expectEval('add(1.5, 2.5)', 4)
   })
 
   test('evaluate with string expression', () => {
-    const env = new Environment().registerVariable('name', 'string')
+    const env = new TestEnvironment().registerVariable('name', 'string')
 
-    const result = env.evaluate('name + " World"', {name: 'Hello'})
-    assert.strictEqual(result, 'Hello World')
+    env.expectEval('name + " World"', 'Hello World', {name: 'Hello'})
   })
 
   test('complex expression with multiple features', () => {
@@ -83,7 +75,7 @@ describe('Environment', () => {
       }
     }
 
-    const env = new Environment()
+    const env = new TestEnvironment()
       .registerType('User', {ctor: User, fields: {name: 'string', age: 'double'}})
       .registerVariable('users', 'list<User>')
       .registerVariable('minAge', 'int')
@@ -98,26 +90,24 @@ describe('Environment', () => {
       minAge: 18n
     }
 
-    assert.deepStrictEqual(
-      env.evaluate('users.filter(u, u.age >= minAge).map(u, u.name)', context),
-      ['Alice', 'Charlie']
+    env.expectEvalDeep(
+      'users.filter(u, u.age >= minAge).map(u, u.name)',
+      ['Alice', 'Charlie'],
+      context
     )
 
-    assert.deepStrictEqual(env.evaluate('users.filter(u, isAdult(u)).map(u, u.name)', context), [
-      'Alice',
-      'Charlie'
-    ])
+    env.expectEvalDeep('users.filter(u, isAdult(u)).map(u, u.name)', ['Alice', 'Charlie'], context)
   })
 
   test('error handling with context', () => {
-    const env = new Environment().registerVariable('x', 'int')
+    const env = new TestEnvironment().registerVariable('x', 'int')
 
-    assert.throws(() => env.evaluate('y + 1', {x: 5n}), /Unknown variable: y/)
-    assert.throws(() => env.evaluate('x + 1', {x: 'not a number'}), EvaluationError)
+    env.expectEvalThrows('y + 1', /Unknown variable: y/, {x: 5n})
+    env.expectEvalThrows('x + 1', EvaluationError, {x: 'not a number'})
   })
 
   test('function overloads', () => {
-    const env = new Environment()
+    const env = new TestEnvironment()
       .registerFunction('convert(double): string', (v) => String(v))
       .registerFunction('convert(int): string', (v) => String(v))
       .registerFunction('int.convert(): string', (v) => v.toString())
@@ -125,71 +115,50 @@ describe('Environment', () => {
       .registerFunction('convert(string): string', (v) => v)
       .registerFunction('string.convert(): string', (v) => v)
 
-    assert.strictEqual(env.evaluate('convert("foo")'), 'foo')
-    assert.strictEqual(env.evaluate('convert(42)'), '42')
-    assert.strictEqual(env.evaluate('convert(1.1)'), '1.1')
-    assert.strictEqual(env.evaluate('convert(1)'), '1')
-    assert.throws(() => env.evaluate('convert("foo", ")'), ParseError)
-    assert.throws(() => env.evaluate('convert("foo", "bar")'), /found no matching overload/)
+    env.expectEval('convert("foo")', 'foo')
+    env.expectEval('convert(42)', '42')
+    env.expectEval('convert(1.1)', '1.1')
+    env.expectEval('convert(1)', '1')
+    env.expectParseThrows('convert("foo", ")', ParseError)
+    env.expectEvalThrows('convert("foo", "bar")', /found no matching overload/)
   })
 
   test('inheritance from global functions', () => {
-    const env = new Environment()
+    const env = new TestEnvironment()
 
-    // Built-in functions should still work
-    const result1 = env.evaluate('size("hello")')
-    assert.strictEqual(result1, 5n)
-
-    const result2 = env.evaluate('"world".size()')
-    assert.strictEqual(result2, 5n)
-
-    const result3 = env.evaluate('string(42)')
-    assert.strictEqual(result3, '42')
+    env.expectEval('size("hello")', 5n)
+    env.expectEval('"world".size()', 5n)
+    env.expectEval('string(42)', '42')
   })
 
   test('mixed built-in and custom functions', () => {
-    const env = new Environment()
+    const env = new TestEnvironment()
       .registerFunction('multiplyBy2(int): int', (x) => x * 2n)
       .registerVariable('text', 'string')
 
-    const result = env.evaluate('multiplyBy2(size(text))', {text: 'hello'})
-    assert.strictEqual(result, 10n) // size('hello') = 5n, double(5n) = 10n
+    env.expectEval('multiplyBy2(size(text))', 10n, {text: 'hello'})
   })
 
   test('variable type validation', () => {
-    const env = new Environment()
+    const env = new TestEnvironment()
       .registerVariable('count', 'int')
       .registerVariable('name', 'string')
 
-    // Valid types should work
-    const result1 = env.evaluate('count + 1', {count: 42n})
-    assert.strictEqual(result1, 43n)
+    env.expectEval('count + 1', 43n, {count: 42n})
+    env.expectEval('name + "!"', 'test!', {name: 'test'})
 
-    const result2 = env.evaluate('name + "!"', {name: 'test'})
-    assert.strictEqual(result2, 'test!')
-
-    // Invalid types should throw
-    assert.throws(() => {
-      env.evaluate('count + 1', {count: 'not an int'})
-    }, EvaluationError)
-
-    assert.throws(() => {
-      env.evaluate('name + "!"', {name: 123})
-    }, EvaluationError)
+    env.expectEvalThrows('count + 1', EvaluationError, {count: 'not an int'})
+    env.expectEvalThrows('name + "!"', EvaluationError, {name: 123})
   })
 
   test('empty context', () => {
-    const env = new Environment()
-
-    const result = env.evaluate('1 + 2 * 3')
-    assert.strictEqual(result, 7n)
+    const env = new TestEnvironment()
+    env.expectEval('1 + 2 * 3', 7n)
   })
 
   test('no context parameter', () => {
-    const env = new Environment()
-
-    const result = env.evaluate('true && false')
-    assert.strictEqual(result, false)
+    const env = new TestEnvironment()
+    env.expectEval('true && false', false)
   })
 
   test('custom operator registration with Vector types', () => {
@@ -200,32 +169,28 @@ describe('Environment', () => {
       }
     }
 
-    const env = new Environment()
+    const env = new TestEnvironment()
       .registerType('Vec2', Vec2)
       .registerVariable('a', 'Vec2')
       .registerVariable('b', 'Vec2')
       .registerOperator('Vec2 * Vec2', (a, b) => a.x * b.x + a.y * b.y) // Dot product
 
-    const result = env.evaluate('a * b', {a: new Vec2(3, 4), b: new Vec2(2, 1)})
-    assert.strictEqual(result, 10) // 3*2 + 4*1 = 10
+    env.expectEval('a * b', 10, {a: new Vec2(3, 4), b: new Vec2(2, 1)})
   })
 
   test('parse() method for AST reuse', () => {
-    const env = new Environment().registerVariable('x', 'int')
+    const env = new TestEnvironment().registerVariable('x', 'int')
 
     const parsed = env.parse('x + 1')
     assert.strictEqual(typeof parsed, 'function')
     assert.ok(parsed.ast)
 
-    const result1 = parsed({x: 5n})
-    assert.strictEqual(result1, 6n)
-
-    const result2 = parsed({x: 10n})
-    assert.strictEqual(result2, 11n)
+    assert.strictEqual(parsed({x: 5n}), 6n)
+    assert.strictEqual(parsed({x: 10n}), 11n)
   })
 
   test('parse() returns function with check method', () => {
-    const env = new Environment().registerVariable('x', 'int').registerVariable('y', 'int')
+    const env = new TestEnvironment().registerVariable('x', 'int').registerVariable('y', 'int')
 
     const parsed = env.parse('x + y')
 
@@ -238,12 +203,11 @@ describe('Environment', () => {
     assert.strictEqual(checkResult.type, 'int')
 
     // Should still be able to evaluate
-    const evalResult = parsed({x: 5n, y: 3n})
-    assert.strictEqual(evalResult, 8n)
+    assert.strictEqual(parsed({x: 5n, y: 3n}), 8n)
   })
 
   test('parse() check detects type errors', () => {
-    const env = new Environment().registerVariable('x', 'int').registerVariable('y', 'string')
+    const env = new TestEnvironment().registerVariable('x', 'int').registerVariable('y', 'string')
 
     const parsed = env.parse('x + y')
 
@@ -255,7 +219,7 @@ describe('Environment', () => {
   })
 
   test('duplicate variable registration throws', () => {
-    const env = new Environment().registerVariable('x', 'int')
+    const env = new TestEnvironment().registerVariable('x', 'int')
 
     assert.throws(
       () => {
@@ -268,87 +232,64 @@ describe('Environment', () => {
   })
 
   test('unlistedVariablesAreDyn with missing variable', () => {
-    const env = new Environment({unlistedVariablesAreDyn: true})
+    const env = new TestEnvironment({unlistedVariablesAreDyn: true})
 
-    // Should work with unlisted variable (dyn type)
-    const result = env.evaluate('unknownVar + 10', {unknownVar: 5n})
-    assert.strictEqual(result, 15n)
+    env.expectEval('unknownVar + 10', 15n, {unknownVar: 5n})
   })
 
   test('unlistedVariablesAreDyn with registered variable', () => {
-    const env = new Environment({unlistedVariablesAreDyn: true}).registerVariable('x', 'string')
+    const env = new TestEnvironment({unlistedVariablesAreDyn: true}).registerVariable('x', 'string')
 
-    // Registered variable should still be type-checked
-    assert.throws(() => {
-      env.evaluate('x', {x: 123})
-    }, EvaluationError)
-
-    // Unlisted variable should work as dyn
-    const result = env.evaluate('y + 10', {y: 5n})
-    assert.strictEqual(result, 15n)
+    env.expectEvalThrows('x', EvaluationError, {x: 123})
+    env.expectEval('y + 10', 15n, {y: 5n})
   })
 
   test('operator overloading with mixed types', () => {
-    const env = new Environment()
+    const env = new TestEnvironment()
       .registerVariable('str', 'string')
       .registerVariable('num', 'int')
       .registerOperator('string * int', (str, num) => str.repeat(Number(num)))
 
-    const result = env.evaluate('str * num', {str: 'ab', num: 3n})
-    assert.strictEqual(result, 'ababab')
+    env.expectEval('str * num', 'ababab', {str: 'ab', num: 3n})
   })
 
   describe('schema-based variable registration', () => {
     test('basic object schema', () => {
-      const env = new Environment().registerVariable('user', {
+      const env = new TestEnvironment().registerVariable('user', {
         schema: {name: 'string', age: 'int'}
       })
 
-      // Type checking
-      const nameCheck = env.check('user.name')
-      assert.strictEqual(nameCheck.valid, true)
-      assert.strictEqual(nameCheck.type, 'string')
+      env.expectType('user.name', 'string')
+      env.expectType('user.age', 'int')
+      env.expectCheckThrows('user.foo', /No such key/)
 
-      const ageCheck = env.check('user.age')
-      assert.strictEqual(ageCheck.valid, true)
-      assert.strictEqual(ageCheck.type, 'int')
-
-      // Undeclared field should fail type check
-      const fooCheck = env.check('user.foo')
-      assert.strictEqual(fooCheck.valid, false)
-      assert.ok(fooCheck.error.message.includes('No such key'))
-
-      // Evaluation with plain object - auto-converted at runtime
       const ctx = {user: {name: 'Alice', age: 30n}}
-      assert.strictEqual(env.evaluate('user.name', ctx), 'Alice')
-      assert.strictEqual(env.evaluate('user.age', ctx), 30n)
+      env.expectEval('user.name', 'Alice', ctx)
+      env.expectEval('user.age', 30n, ctx)
     })
 
     test('runtime field type validation', () => {
-      const env = new Environment().registerVariable('user', {
+      const env = new TestEnvironment().registerVariable('user', {
         schema: {name: 'string', age: 'int'}
       })
 
-      // Wrong field type should throw at runtime
-      assert.throws(
-        () => env.evaluate('user.age', {user: {name: 'Alice', age: 30}}),
-        /Field 'age' is not of type 'int', got 'double'/
-      )
+      env.expectEvalThrows('user.age', /Field 'age' is not of type 'int', got 'double'/, {
+        user: {name: 'Alice', age: 30}
+      })
     })
 
     test('undeclared field rejected at runtime', () => {
-      const env = new Environment().registerVariable('user', {
+      const env = new TestEnvironment().registerVariable('user', {
         schema: {name: 'string'}
       })
 
-      assert.throws(
-        () => env.evaluate('user.password', {user: {name: 'Alice', password: 'secret'}}),
-        /No such key: password/
-      )
+      env.expectEvalThrows('user.password', /No such key: password/, {
+        user: {name: 'Alice', password: 'secret'}
+      })
     })
 
     test('nested object schema', () => {
-      const env = new Environment().registerVariable('user', {
+      const env = new TestEnvironment().registerVariable('user', {
         schema: {
           profile: {
             name: 'string',
@@ -358,30 +299,21 @@ describe('Environment', () => {
         }
       })
 
-      // Type checking nested fields
-      const nameCheck = env.check('user.profile.name')
-      assert.strictEqual(nameCheck.valid, true)
-      assert.strictEqual(nameCheck.type, 'string')
+      env.expectType('user.profile.name', 'string')
+      env.expectType('user.status', 'string')
+      env.expectCheckThrows('user.profile.foo', /No such key/)
 
-      const statusCheck = env.check('user.status')
-      assert.strictEqual(statusCheck.valid, true)
-      assert.strictEqual(statusCheck.type, 'string')
-
-      // Undeclared nested field should fail
-      const fooCheck = env.check('user.profile.foo')
-      assert.strictEqual(fooCheck.valid, false)
-
-      // Evaluation with nested plain objects - auto-converted recursively
       const ctx = {user: {profile: {name: 'Alice', age: 30n}, status: 'active'}}
-      assert.strictEqual(env.evaluate('user.profile.name', ctx), 'Alice')
-      assert.strictEqual(env.evaluate('user.status', ctx), 'active')
+      env.expectEval('user.profile.name', 'Alice', ctx)
+      env.expectEval('user.status', 'active', ctx)
     })
 
     test('deeply nested schema', () => {
-      const env = new Environment().registerVariable('data', {
+      const env = new TestEnvironment().registerVariable('data', {
         schema: {
           level1: {
             level2: {
+              value: 'int',
               level3: {
                 value: 'string'
               }
@@ -390,67 +322,58 @@ describe('Environment', () => {
         }
       })
 
-      const check = env.check('data.level1.level2.level3.value')
-      assert.strictEqual(check.valid, true)
-      assert.strictEqual(check.type, 'string')
+      env.expectType('data.level1.level2.value', 'int')
+      env.expectType('data.level1.level2.level3.value', 'string')
 
-      const ctx = {data: {level1: {level2: {level3: {value: 'deep'}}}}}
-      assert.strictEqual(env.evaluate('data.level1.level2.level3.value', ctx), 'deep')
+      const ctx = {data: {level1: {level2: {value: 1n, level3: {value: 'deep'}}}}}
+      env.expectEval('data.level1.level2.value', 1n, ctx)
+      env.expectEval('data.level1.level2.level3.value', 'deep', ctx)
     })
 
     test('schema with list and map types', () => {
-      const env = new Environment().registerVariable('data', {
+      const env = new TestEnvironment().registerVariable('data', {
         schema: {
           names: 'list<string>',
           scores: 'map<string, int>'
         }
       })
 
-      const namesCheck = env.check('data.names')
-      assert.strictEqual(namesCheck.valid, true)
-      assert.strictEqual(namesCheck.type, 'list<string>')
-
-      const scoresCheck = env.check('data.scores')
-      assert.strictEqual(scoresCheck.valid, true)
-      assert.strictEqual(scoresCheck.type, 'map<string, int>')
+      env.expectType('data.names', 'list<string>')
+      env.expectType('data.scores', 'map<string, int>')
     })
 
     test('multiple schema variables', () => {
-      const env = new Environment()
+      const env = new TestEnvironment()
         .registerVariable('user', {schema: {name: 'string'}})
         .registerVariable('order', {schema: {id: 'int', total: 'double'}})
 
-      assert.strictEqual(env.check('user.name').type, 'string')
-      assert.strictEqual(env.check('order.id').type, 'int')
-      assert.strictEqual(env.check('order.total').type, 'double')
+      env.expectType('user.name', 'string')
+      env.expectType('order.id', 'int')
+      env.expectType('order.total', 'double')
     })
 
     test('schema in expressions', () => {
-      const env = new Environment().registerVariable('user', {
+      const env = new TestEnvironment().registerVariable('user', {
         schema: {
           name: 'string',
           age: 'int'
         }
       })
 
-      // Use in complex expression
-      const check = env.check('user.name + " is " + string(user.age)')
-      assert.strictEqual(check.valid, true)
-      assert.strictEqual(check.type, 'string')
-
       const ctx = {user: {name: 'Alice', age: 30n}}
-      assert.strictEqual(env.evaluate('user.name + " is " + string(user.age)', ctx), 'Alice is 30')
+      env.expectType('user.name + " is " + string(user.age)', 'string')
+      env.expectEval('user.name + " is " + string(user.age)', 'Alice is 30', ctx)
     })
 
     test('schema variable in list expression', () => {
-      const env = new Environment().registerVariable('user', {
+      const env = new TestEnvironment().registerVariable('user', {
         schema: {
           name: 'string',
           age: 'int'
         }
       })
 
-      // Using schema variable in a list should work
+      // Tests specific return structure - keep raw evaluate
       const ctx = {user: {name: 'Alice', age: 30n}}
       const result = env.evaluate('[user]', ctx)
       assert.strictEqual(result.length, 1)

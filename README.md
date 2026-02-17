@@ -68,22 +68,32 @@ For type-safe expressions with custom functions and operators:
 
 ```javascript
 import {Environment} from '@marcbachmann/cel-js'
+class User {
+  constructor ({email, age}) {
+    this.email = email
+    this.age = age
+  }
+}
 
 const env = new Environment()
-  .registerVariable('skipAgeCheck', 'bool')
-  .registerVariable('user', {
-    schema: {
+  .registerType('User', {
+    fields: {
       email: 'string',
-      age: 'int',
-    }
+      age: 'int'
+    },
+    ctor: User
   })
+  .registerVariable('skipAgeCheck', 'bool')
+  .registerVariable('user', 'User')
   .registerConstant('minAge', 'int', 18n)
   .registerFunction('isAdult(int): bool', age => age >= 18n)
   .registerOperator('string * int', (str, n) => str.repeat(Number(n)))
 
 // Type-checked evaluation with constant
-env.evaluate('isAdult(user.age) && (user.age >= minAge || skipAgeCheck)', {
-  user: {age: 25n}, skipAgeCheck: true
+env.evaluate(
+  'skipAgeCheck || (isAdult(user.age) && (user.age >= minAge))', {
+  user: new User({age: 25n}),
+  skipAgeCheck: true
 })
 
 // Custom operators
@@ -188,6 +198,7 @@ env.registerType('Vector', {ctor: Vector, fields: {x: 'double', y: 'double'}})
 env.registerType('Vector', {fields: {x: 'double', y: 'double'}})
 
 // Name + object with nested schema (registers nested types automatically)
+// But this type can only be used during variable registration.
 env.registerType('Vector', {schema: {x: 'double', y: 'double'}})
 
 // Single object with name and schema
@@ -198,6 +209,7 @@ env.registerType({ctor: Vector, fields: {x: 'double', y: 'double'}})
 ```
 
 When `fields` or `schema` is provided without a `ctor`, an internal wrapper class is auto-generated and plain objects are automatically converted at runtime. A custom `convert` function can be passed to override this default conversion.
+In that case the type should only be used during variable registration.
 
 When using the `schema` declaration, we're creating a new Map instance for the specific type when retrieving the values by variable from a context object.
 
