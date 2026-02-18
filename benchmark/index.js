@@ -21,6 +21,7 @@ const env = new Environment({
 })
   .registerVariable('items', 'list<dyn>')
   .registerVariable('doubles', 'list<double>')
+  .registerVariable('intVar', 'int')
   .registerFunction('identityAsync(double): double', async (a) => a)
   .registerFunction('identityAsync(list): list', async (a) => a)
 

@@ -1,91 +1,91 @@
 {
   "suite": "collections",
-  "capturedAt": "2026-02-16T17:49:06.988Z",
+  "capturedAt": "2026-02-20T09:21:08.652Z",
   "nodeVersion": "v24.13.1",
   "results": [
     {
       "name": "parse/general/List Creation",
-      "opsSec": 1883812,
+      "opsSec": 2041801,
       "runsSampled": 10,
-      "min": 513.2782441029431,
-      "max": 545.97166648759
+      "min": 487.7874579453877,
+      "max": 492.7702055982165
     },
     {
       "name": "eval/general/List Creation",
-      "opsSec": 22708025,
+      "opsSec": 23684635,
       "runsSampled": 10,
-      "min": 42.598841485130244,
-      "max": 45.03841572496565
+      "min": 41.76859089455274,
+      "max": 42.847533015757435
     },
     {
       "name": "parse/general/Large List Creation",
-      "opsSec": 328170,
+      "opsSec": 344134,
       "runsSampled": 11,
-      "min": 3010.739194408681,
-      "max": 3095.0357962368057
+      "min": 2889.7877108011903,
+      "max": 2947.3514211886304
     },
     {
       "name": "eval/general/Large List Creation",
-      "opsSec": 4288295,
+      "opsSec": 4378120,
       "runsSampled": 11,
-      "min": 228.77048156898903,
-      "max": 240.11244545051457
+      "min": 225.34471945244826,
+      "max": 233.1974030579538
     },
     {
       "name": "parse/general/Map Creation",
-      "opsSec": 1377371,
+      "opsSec": 1439202,
       "runsSampled": 11,
-      "min": 704.1879295103938,
-      "max": 751.9529565642338
+      "min": 689.2914290494848,
+      "max": 701.4682661668229
     },
     {
       "name": "eval/general/Map Creation",
-      "opsSec": 9048650,
+      "opsSec": 9269186,
       "runsSampled": 10,
-      "min": 108.20999854704279,
-      "max": 113.95045001747641
+      "min": 106.6396081418641,
+      "max": 109.87688076119309
     },
     {
       "name": "parse/general/Nested Map Creation",
-      "opsSec": 258164,
+      "opsSec": 253462,
       "runsSampled": 11,
-      "min": 3802.1789652247667,
-      "max": 3964.136247384329
+      "min": 3928.969699360846,
+      "max": 3985.1476766390833
     },
     {
       "name": "eval/general/Nested Map Creation",
-      "opsSec": 904675,
-      "runsSampled": 9,
-      "min": 996.5736066338219,
-      "max": 1099.9390091329913
+      "opsSec": 953414,
+      "runsSampled": 11,
+      "min": 1038.4343721100286,
+      "max": 1075.3324149039888
     },
     {
       "name": "parse/general/List of Maps Access",
-      "opsSec": 1851878,
+      "opsSec": 1914906,
       "runsSampled": 11,
-      "min": 512.0616245913454,
-      "max": 579.2420303584411
+      "min": 517.258770786634,
+      "max": 527.323480328758
     },
     {
       "name": "eval/general/List of Maps Access",
-      "opsSec": 5262606,
-      "runsSampled": 9,
-      "min": 182.74798104717345,
-      "max": 191.90430937468028
+      "opsSec": 5540993,
+      "runsSampled": 10,
+      "min": 176.61160974806404,
+      "max": 183.05475668210252
     },
     {
       "name": "parse/general/Map Access",
-      "opsSec": 1661780,
+      "opsSec": 1775757,
       "runsSampled": 11,
-      "min": 573.6282471304429,
-      "max": 638.3115990700078
+      "min": 561.1379744699994,
+      "max": 568.7727798026491
     },
     {
       "name": "eval/general/Map Access",
-      "opsSec": 5102032,
+      "opsSec": 5437842,
       "runsSampled": 10,
-      "min": 190.52025639918512,
-      "max": 199.88357032627866
+      "min": 179.70665697938426,
+      "max": 187.1255344336361
     }
   ]
 }

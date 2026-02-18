@@ -1,5 +1,10 @@
 export default [
   {
+    name: 'Int access',
+    expression: 'intVar',
+    context: {intVar: 1n}
+  },
+  {
     name: 'Variable Access',
     expression: 'user.name',
     context: {user: {name: 'John Doe'}}

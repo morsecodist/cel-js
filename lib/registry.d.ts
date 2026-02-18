@@ -269,7 +269,7 @@ export class OverlayContext {
   setAccuValue(accuValue: any): this
 
   /** Set the iteration variable value */
-  setIterValue(iterValue: any, evaluator: any, ast: any): this
+  setIterValue(iterValue: any, evaluator: any): this
 
   /** Resolve a value by name, falling back to parent scopes. */
   getValue(name: string): any
